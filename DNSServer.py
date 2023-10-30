@@ -94,6 +94,20 @@ def run_dns_server():
                 elif qtype == dns.rdatatype.SOA:
                     # Handle SOA record format
                     # ...
+                    mname, rname, serial, refresh, retry, expire, minimum = answer_data
+                    rdata = SOA(
+                        dns.rdataclass.IN,
+                        dns.rdatatype.SOA,
+                        mname,
+                        rname,
+                        serial,
+                        refresh,
+                        retry,
+                        expire,
+                        minimum
+                    )
+                    response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
+                    response.answer[-1].add(rdata)
                 else:
                     rdata = dns.rdata.from_text(dns.rdataclass.IN, qtype, answer_data)
                     response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
