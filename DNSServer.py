@@ -1,11 +1,8 @@
 import dns.message
 import dns.rdatatype
-import dns.rdataclass
-import dns.rdtypes
-import dns.rdtypes.ANY
+import dns.rdata
 from dns.rdtypes.ANY.MX import MX
 from dns.rdtypes.ANY.SOA import SOA
-import dns.rdata
 import socket
 import threading
 import signal
@@ -65,21 +62,10 @@ dns_records = {
             86400, #minimum
         ),
     },
-    'safebank.com.': {
-        dns.rdatatype.A: '192.168.1.102',
-    },
-    'google.com.': {
-        dns.rdatatype.A: '192.168.1.103',
-    },
-    'legitsite.com.': {
-        dns.rdatatype.A: '192.168.1.104',
-    },
-    'yahoo.com.': {
-        dns.rdatatype.A: '192.168.1.105',
-    },
+    # Other DNS records...
     'nyu.edu.': {
         dns.rdatatype.A: '192.168.1.106',
-        dns.rdatatype.TXT: (encrypted_value,),
+        dns.rdatatype.TXT: (encrypted_value.encode('utf-8'),),  # Encrypt the data before storing
         dns.rdatatype.MX: [(10, 'mxa-00256a01.gslb.pphosted.com.')],
         dns.rdatatype.AAAA: '2001:0db8:85a3:0000:0000:8a2e:0373:7312',
         dns.rdatatype.NS: 'ns1.nyu.edu.',
@@ -109,6 +95,8 @@ def run_dns_server():
                         response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
                         response.answer[-1].add(rdata)
                 elif qtype == dns.rdatatype.SOA:
+                    # Handle SOA record format
+                    # ...
                     mname, rname, serial, refresh, retry, expire, minimum = answer_data
                     rdata = SOA(
                         dns.rdataclass.IN,
@@ -127,15 +115,21 @@ def run_dns_server():
                     if isinstance(answer_data, tuple):
                         # Handle other record types with multiple values in the tuple
                         for data in answer_data:
+                            # Decrypt the data if it's encrypted
+                            if isinstance(data, bytes):
+                                data = decrypt_with_aes(data, password, salt)
                             rdata = dns.rdata.from_text(dns.rdataclass.IN, qtype, data)
                             response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
                             response.answer[-1].add(rdata)
                     else:
                         # Handle single-value record types
+                        # Decrypt the data if it's encrypted
+                        if isinstance(answer_data, bytes):
+                            answer_data = decrypt_with_aes(answer_data, password, salt)
                         rdata = dns.rdata.from_text(dns.rdataclass.IN, qtype, answer_data)
                         response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
                         response.answer[-1].add(rdata)
-            
+
                 response.flags |= dns.flags.AA
 
             server_socket.sendto(response.to_wire(), addr)
