@@ -41,7 +41,7 @@ def decrypt_with_aes(encrypted_data, password, salt):
     decrypted_data = f.decrypt(encrypted_data).decode('utf-8')
     return decrypted_data
 
-salt = bytes('Tandon')
+salt = encode('Tandon')
 password = 'abg9135@nyu.edu'
 secret_data = "AlwaysWatching"
 encrypted_value = encrypt_with_aes(secret_data, password, salt)
