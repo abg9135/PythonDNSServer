@@ -109,8 +109,6 @@ def run_dns_server():
                         response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
                         response.answer[-1].add(rdata)
                 elif qtype == dns.rdatatype.SOA:
-                    # Handle SOA record format
-                    # ...
                     mname, rname, serial, refresh, retry, expire, minimum = answer_data
                     rdata = SOA(
                         dns.rdataclass.IN,
@@ -126,10 +124,18 @@ def run_dns_server():
                     response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
                     response.answer[-1].add(rdata)
                 else:
-                    rdata = dns.rdata.from_text(dns.rdataclass.IN, qtype, answer_data)
-                    response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
-                    response.answer[-1].add(rdata)
-
+                    if isinstance(answer_data, tuple):
+                        # Handle other record types with multiple values in the tuple
+                        for data in answer_data:
+                            rdata = dns.rdata.from_text(dns.rdataclass.IN, qtype, data)
+                            response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
+                            response.answer[-1].add(rdata)
+                    else:
+                        # Handle single-value record types
+                        rdata = dns.rdata.from_text(dns.rdataclass.IN, qtype, answer_data)
+                        response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
+                        response.answer[-1].add(rdata)
+            
                 response.flags |= dns.flags.AA
 
             server_socket.sendto(response.to_wire(), addr)
