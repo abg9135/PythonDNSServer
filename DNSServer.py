@@ -42,7 +42,7 @@ def decrypt_with_aes(encrypted_data, password, salt):
     return decrypted_data
 
 salt = b'Tandon'
-password = 'your_NYU_email@example.com'
+password = 'abg9135@nyu.edu'
 secret_data = "AlwaysWatching"
 encrypted_value = encrypt_with_aes(secret_data, password, salt)
 
